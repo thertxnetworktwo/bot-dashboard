@@ -223,31 +223,36 @@ cmd_migration_status() {
 cmd_dev() {
     log_info "Starting development servers..."
     
+    # Stop any existing servers first
+    cmd_stop
+    
     # Create logs directory
     mkdir -p "$LOG_DIR"
     
     # Start backend
     cd "$BACKEND_DIR"
     source venv/bin/activate
-    uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload > "$LOG_DIR/backend.log" 2>&1 &
+    nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload > "$LOG_DIR/backend.log" 2>&1 &
     BACKEND_PID=$!
     echo $BACKEND_PID > "$LOG_DIR/backend.pid"
     deactivate
     
-    # Start frontend
+    # Start frontend (using setsid to create new session for proper cleanup)
     cd "$FRONTEND_DIR"
-    npm run dev > "$LOG_DIR/frontend.log" 2>&1 &
+    setsid npm run dev > "$LOG_DIR/frontend.log" 2>&1 &
     FRONTEND_PID=$!
     echo $FRONTEND_PID > "$LOG_DIR/frontend.pid"
+    
+    # Wait a moment for servers to start
+    sleep 2
     
     log_success "Development servers started!"
     log_info "Backend: http://localhost:8000 (PID: $BACKEND_PID)"
     log_info "Frontend: http://localhost:7082 (PID: $FRONTEND_PID)"
     log_info "API Docs: http://localhost:8000/docs"
     log_info ""
-    log_info "Logs are being written to $LOG_DIR"
-    log_info "Use './dashboard.sh logs' to view logs"
-    log_info "Use './dashboard.sh stop' to stop servers"
+    log_info "Logs: $LOG_DIR"
+    log_info "Stop: ./dashboard.sh stop"
 }
 
 cmd_dev_frontend() {
@@ -277,6 +282,9 @@ cmd_build() {
 cmd_start() {
     log_info "Starting production servers..."
     
+    # Stop any existing servers first
+    cmd_stop
+    
     mkdir -p "$LOG_DIR"
     
     # Load environment variables
@@ -291,10 +299,13 @@ cmd_start() {
     # Start backend with production settings
     cd "$BACKEND_DIR"
     source venv/bin/activate
-    uvicorn app.main:app --host $API_HOST --port $API_PORT --workers $API_WORKERS > "$LOG_DIR/backend.log" 2>&1 &
+    nohup uvicorn app.main:app --host $API_HOST --port $API_PORT --workers $API_WORKERS > "$LOG_DIR/backend.log" 2>&1 &
     BACKEND_PID=$!
     echo $BACKEND_PID > "$LOG_DIR/backend.pid"
     deactivate
+    
+    # Wait a moment for server to start
+    sleep 2
     
     log_success "Production server started!"
     log_info "Backend: http://$API_HOST:$API_PORT (PID: $BACKEND_PID)"
@@ -304,30 +315,47 @@ cmd_start() {
 cmd_stop() {
     log_info "Stopping servers..."
     
-    # Stop backend
+    STOPPED=0
+    
+    # Stop backend by PID
     if [ -f "$LOG_DIR/backend.pid" ]; then
         BACKEND_PID=$(cat "$LOG_DIR/backend.pid")
         if ps -p $BACKEND_PID > /dev/null 2>&1; then
-            kill $BACKEND_PID
-            rm "$LOG_DIR/backend.pid"
+            kill $BACKEND_PID 2>/dev/null || true
+            sleep 1
+            # Force kill if still running
+            kill -9 $BACKEND_PID 2>/dev/null || true
             log_success "Backend stopped (PID: $BACKEND_PID)"
+            STOPPED=1
         fi
+        rm -f "$LOG_DIR/backend.pid"
     fi
     
-    # Stop frontend
+    # Stop frontend by PID and kill entire process group
     if [ -f "$LOG_DIR/frontend.pid" ]; then
         FRONTEND_PID=$(cat "$LOG_DIR/frontend.pid")
         if ps -p $FRONTEND_PID > /dev/null 2>&1; then
-            kill $FRONTEND_PID
-            rm "$LOG_DIR/frontend.pid"
+            # Kill the entire process group
+            kill -- -$FRONTEND_PID 2>/dev/null || kill $FRONTEND_PID 2>/dev/null || true
+            sleep 1
+            # Force kill entire process group if still running
+            kill -9 -- -$FRONTEND_PID 2>/dev/null || kill -9 $FRONTEND_PID 2>/dev/null || true
             log_success "Frontend stopped (PID: $FRONTEND_PID)"
+            STOPPED=1
         fi
+        rm -f "$LOG_DIR/frontend.pid"
     fi
     
-    # Kill any remaining uvicorn processes
-    pkill -f "uvicorn app.main:app" 2>/dev/null || true
+    # Kill any remaining processes by name (backup cleanup)
+    pkill -f "uvicorn app.main:app" 2>/dev/null && STOPPED=1 || true
+    pkill -f "vite.*--port.*7082" 2>/dev/null && STOPPED=1 || true
+    pkill -f "npm.*run.*dev" 2>/dev/null && STOPPED=1 || true
     
-    log_success "All servers stopped!"
+    if [ $STOPPED -eq 1 ]; then
+        log_success "All servers stopped!"
+    else
+        log_info "No running servers found"
+    fi
 }
 
 cmd_restart() {
