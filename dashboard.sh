@@ -136,11 +136,32 @@ cmd_setup() {
     DB_PASSWORD="${DB_PASSWORD:-your_secure_password}"
     DB_NAME="${DB_NAME:-dashboard_db}"
     
-    # Create database and user (may fail if already exists, that's ok)
-    sudo -u postgres psql <<EOF 2>/dev/null || true
-CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';
-CREATE DATABASE $DB_NAME OWNER $DB_USER;
+    # Create user if it doesn't exist
+    sudo -u postgres psql <<EOF
+DO \$\$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_user WHERE usename = '$DB_USER') THEN
+        CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';
+    END IF;
+END
+\$\$;
+EOF
+    
+    # Create database if it doesn't exist
+    sudo -u postgres psql <<EOF
+SELECT 'CREATE DATABASE $DB_NAME OWNER $DB_USER'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$DB_NAME')\gexec
+EOF
+    
+    # Grant all necessary privileges
+    sudo -u postgres psql <<EOF
 GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;
+\c $DB_NAME
+GRANT ALL ON SCHEMA public TO $DB_USER;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO $DB_USER;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO $DB_USER;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $DB_USER;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO $DB_USER;
 EOF
     
     # Run initial migrations
