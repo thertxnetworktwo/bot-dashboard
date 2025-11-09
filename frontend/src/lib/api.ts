@@ -10,10 +10,16 @@ export const apiClient = axios.create({
   },
 })
 
+// Define error response type
+interface ErrorResponse {
+  detail?: string
+  message?: string
+}
+
 // Response interceptor for error handling
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
+  (error: AxiosError<ErrorResponse>) => {
     const message = error.response?.data?.detail || error.message || 'An error occurred'
     toast.error(message)
     return Promise.reject(error)

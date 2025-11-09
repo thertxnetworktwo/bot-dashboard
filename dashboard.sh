@@ -242,7 +242,7 @@ cmd_dev() {
     
     log_success "Development servers started!"
     log_info "Backend: http://localhost:8000 (PID: $BACKEND_PID)"
-    log_info "Frontend: http://localhost:5173 (PID: $FRONTEND_PID)"
+    log_info "Frontend: http://localhost:7082 (PID: $FRONTEND_PID)"
     log_info "API Docs: http://localhost:8000/docs"
     log_info ""
     log_info "Logs are being written to $LOG_DIR"
