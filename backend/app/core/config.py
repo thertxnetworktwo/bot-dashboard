@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     API_PORT: int = 8000
     API_WORKERS: int = 4
     
+    # CORS - Comma-separated list of allowed origins
+    CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,http://localhost:7082"
+    
     # Phone Registry (External)
     PHONE_REGISTRY_URL: str = "http://localhost:8000"
     PHONE_REGISTRY_API_KEY: str = "your-api-key"
