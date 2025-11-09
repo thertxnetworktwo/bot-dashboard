@@ -27,6 +27,10 @@ API_HOST=0.0.0.0
 API_PORT=8000
 API_WORKERS=4
 
+# CORS Configuration - Add your VPS frontend URL
+CORS_ORIGINS=http://YOUR_VPS_IP:7082,http://localhost:7082
+# Example: CORS_ORIGINS=http://141.136.42.249:7082,http://localhost:7082
+
 # Environment
 ENV=production
 ```
@@ -43,7 +47,10 @@ VITE_API_URL=http://YOUR_VPS_IP:8000
 # VITE_API_URL=http://141.136.42.249:8000
 ```
 
-**Important**: Replace `YOUR_VPS_IP` with your actual VPS IP address.
+**Important**: 
+- Replace `YOUR_VPS_IP` with your actual VPS IP address in BOTH files
+- The CORS_ORIGINS in backend/.env must include your frontend URL
+
 
 ### Step 2: Build and Deploy
 
@@ -206,17 +213,35 @@ npm run build
 
 #### CORS Issues
 
-If you get CORS errors, update `backend/app/main.py`:
-```python
-from fastapi.middleware.cors import CORSMiddleware
+If you get CORS (Cross-Origin Resource Sharing) errors:
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your domain
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+**Browser console shows**: `Access to XMLHttpRequest at 'http://YOUR_VPS_IP:8000/api/...' from origin 'http://YOUR_VPS_IP:7082' has been blocked by CORS policy`
+
+**Solution**:
+
+1. Edit `backend/.env` and add your frontend URL to CORS_ORIGINS:
+```bash
+CORS_ORIGINS=http://141.136.42.249:7082,http://localhost:7082
+```
+
+2. Restart the backend:
+```bash
+./dashboard.sh stop
+./dashboard.sh start
+```
+
+**For wildcard (allow all origins - DEV ONLY)**:
+```bash
+# In backend/.env
+CORS_ORIGINS=*
+```
+
+⚠️ **Warning**: Using `*` allows any website to access your API. Only use for testing.
+
+**For production with domain**:
+```bash
+# In backend/.env
+CORS_ORIGINS=https://yourdomain.com,http://yourdomain.com
 ```
 
 ### Security Recommendations
