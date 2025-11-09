@@ -1,7 +1,9 @@
 import axios, { AxiosError } from 'axios'
 import { toast } from 'sonner'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// Use relative URL in production, or VITE_API_URL for development
+// When building for production, set VITE_API_URL to empty string or your backend URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

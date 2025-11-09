@@ -2,6 +2,8 @@
 
 A full-stack dashboard application for managing Telegram bot products with integrated phone registry API functionality.
 
+⚠️ **Security Notice**: This dashboard currently does NOT include authentication. See [Authentication Guide](docs/AUTHENTICATION.md) for security recommendations.
+
 ## Features
 
 - 📊 **Dashboard Analytics** - Track products, expiration dates, and key metrics
@@ -26,6 +28,12 @@ A full-stack dashboard application for managing Telegram bot products with integ
 - Alembic for migrations
 - PostgreSQL database
 - Pydantic for validation
+
+## Documentation
+
+- 🚀 [VPS Deployment Guide](docs/VPS_DEPLOYMENT.md) - Deploy to production server
+- 🔒 [Authentication Guide](docs/AUTHENTICATION.md) - Secure your dashboard
+- 📚 [API Documentation](http://localhost:8000/docs) - Interactive API docs (when running)
 
 ## Quick Start
 
@@ -57,6 +65,10 @@ cd bot-dashboard
 ```bash
 # Edit backend/.env with your settings
 nano backend/.env
+
+# For VPS deployment, also configure frontend/.env
+nano frontend/.env
+# Set VITE_API_URL=http://YOUR_VPS_IP:8000
 ```
 
 5. Start development servers:
@@ -65,9 +77,11 @@ nano backend/.env
 ```
 
 The application will be available at:
-- Frontend: http://localhost:5173
+- Frontend: http://localhost:7082
 - Backend API: http://localhost:8000
 - API Documentation: http://localhost:8000/docs
+
+**Note**: For VPS/production deployment with external access, see the [VPS Deployment Guide](docs/VPS_DEPLOYMENT.md).
 
 ## Dashboard Script Commands
 
