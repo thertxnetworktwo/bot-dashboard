@@ -17,7 +17,6 @@ build/
 *.db
 *.sqlite
 *.sqlite3
-alembic/versions/*.pyc
 
 # Logs
 *.log
@@ -41,3 +40,10 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+
+# Django
+staticfiles/
+media/
+
+# Old FastAPI backup
+old_fastapi_backup/

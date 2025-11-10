@@ -1,21 +1,23 @@
 import pytest
-from httpx import AsyncClient
-from app.main import app
+from django.test import Client
+from django.urls import reverse
 
 
-@pytest.mark.asyncio
-async def test_health_check():
+@pytest.mark.django_db
+def test_health_check():
     """Test health check endpoint."""
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        response = await ac.get("/health")
+    client = Client()
+    response = client.get('/api/health')
     assert response.status_code == 200
-    assert response.json()["status"] == "healthy"
+    assert response.json()['status'] == 'healthy'
 
 
-@pytest.mark.asyncio
-async def test_root():
-    """Test root endpoint."""
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        response = await ac.get("/")
+@pytest.mark.django_db
+def test_products_list():
+    """Test products list endpoint."""
+    client = Client()
+    response = client.get('/api/products/')
     assert response.status_code == 200
-    assert "message" in response.json()
+    data = response.json()
+    assert 'total' in data
+    assert 'products' in data
