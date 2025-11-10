@@ -33,7 +33,7 @@ class PhoneCheckView(APIView):
         except Exception as e:
             logger.error(f"Error checking phone: {e}")
             return Response(
-                {'detail': str(e)},
+                {'detail': 'Failed to check phone number'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -55,7 +55,7 @@ class PhoneRegisterView(APIView):
         except Exception as e:
             logger.error(f"Error registering phone: {e}")
             return Response(
-                {'detail': str(e)},
+                {'detail': 'Failed to register phone number'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -77,7 +77,7 @@ class PhoneBulkRegisterView(APIView):
         except Exception as e:
             logger.error(f"Error bulk registering phones: {e}")
             return Response(
-                {'detail': str(e)},
+                {'detail': 'Failed to bulk register phone numbers'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -103,6 +103,6 @@ class PhoneCleanupView(APIView):
         except Exception as e:
             logger.error(f"Error cleaning up phone records: {e}")
             return Response(
-                {'detail': str(e)},
+                {'detail': 'Failed to cleanup phone records'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
